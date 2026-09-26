@@ -14,7 +14,7 @@ with (DATA / "train.jsonl").open(encoding="utf-8") as source:
     example = json.loads(source.readline())
 
 text = example["input"]
-labels = manifest["labels"]
+labels = manifest["labels"][:5]
 
 started = time.perf_counter()
 model = AutoExtractor.from_pretrained(MODEL, map_location="cpu")

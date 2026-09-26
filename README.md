@@ -33,4 +33,44 @@ python -m venv .venv
 
 `predict_one.py` takes the first **training** message and supplies all 77 possible labels to the model. It prints the model prediction, then reveals the correct label for inspection. The model does not receive the correct label. First use downloads the weights and includes warm-up time, so this single timing is not a benchmark.
 
+On the first local CPU walkthrough (2026-09-27), “I am still waiting on my card?” was predicted as `card_arrival`, matching the correct label. Loading took 47.78 s including the first download; the prediction took 1.23 s. One correct message does not estimate dataset accuracy.
+
+## Step 3: check an evaluation loop
+
+```powershell
+.\.venv\Scripts\python score_ten.py --device cpu
+```
+
+`score_ten.py` picks 10 training messages with a fixed random seed, supplies all 77 labels for each, and counts matches. `model.eval()` and `torch.inference_mode()` make this a forward-pass check like evaluating a CNN. The sample is deliberately small and comes from the training split, so its accuracy is only a code and error-inspection check. The official test split remains untouched.
+
+The first ten-message check scored 6/10 and took 11.07 s of prediction time on CPU, excluding model loading. Inspect the mismatched message text before drawing conclusions from that fraction.
+
+### CUDA on this Windows laptop
+
+The RTX 3050 Ti laptop GPU and driver 551.78 support the CUDA 12.4 wheel used here. The default PyPI installation provided a CPU-only PyTorch wheel, so install the official CUDA build **inside this project's `.venv`** after `requirements.txt`:
+
+```powershell
+.\.venv\Scripts\python -m pip install "torch==2.6.0" --index-url https://download.pytorch.org/whl/cu124
+.\.venv\Scripts\python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+.\.venv\Scripts\python score_ten.py --device cuda
+```
+
+The 2026-09-27 CUDA run used PyTorch `2.6.0+cu124` and scored the same 6/10 in 2.74 s of prediction time, excluding checkpoint loading. The earlier CPU run used PyTorch `2.14.0+cpu`, so those two times are observations under different software builds, not a controlled speed comparison. The official test set has not been evaluated.
+
+## Step 4: make a validation split before training
+
+```powershell
+python make_validation.py
+```
+
+This makes a seeded 90/10 split of the **official training** messages. It groups duplicate text, keeps all 77 intents in both subsets, and checks that no identical message crosses between them. Use `data/development_train.jsonl` to try training settings and `data/validation.jsonl` to compare them. The official `data/test.jsonl` remains the final comparison set. If we choose settings on validation, we can later retrain on all 10,003 original training messages before opening the test split.
+
+## Step 5: two training updates on CUDA
+
+```powershell
+.\.venv\Scripts\python train_pilot.py
+```
+
+This samples eight development-training messages and runs **two** LoRA updates on the same GLiNER 2.5 base checkpoint. Batch size is one for the 4 GB GPU. It prints the fraction of trainable parameters and saves a small adapter under `runs/pilot_lora/final/`. The script verifies that two update steps completed and the adapter file exists. This is a training-path check, not a tuned classifier or a test-set result. LoRA is an explicit pilot choice for the local GPU; Josh's post did not specify his fine-tuning method. [GLiNER2 training guide](https://github.com/fastino-ai/GLiNER2/blob/main/tutorial/9-training.md)
+
 Josh Kuechly's screenshot does not identify his exact checkpoint or training settings. We chose the official English base checkpoint and will record that choice in any later comparison. Next we can write a fixed-test evaluator and then the fine-tuning step. BANKING77 classification is the rehearsal; the later 6190 task is memory-graph extraction from personal conversations and notes. No model training or test-set evaluation has been run yet.
