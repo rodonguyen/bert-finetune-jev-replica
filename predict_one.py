@@ -20,14 +20,16 @@ started = time.perf_counter()
 model = AutoExtractor.from_pretrained(MODEL, map_location="cpu")
 load_seconds = time.perf_counter() - started
 
-# The model receives the message and 77 possible labels, but not the correct label.
+# The model receives the message and five possible labels, but not the correct label.
 started = time.perf_counter()
-result = model.classify_text(text, {"banking_intent": labels})
+result = model.classify_text(text, {"banking_intent": labels}, include_confidence=True)
 predict_seconds = time.perf_counter() - started
 
 gold = example["output"]["classifications"][0]["true_label"][0]
+prediction = result["banking_intent"]
 print(f"Message: {text}")
-print(f"Prediction: {result['banking_intent']}")
+print(f"Prediction: {prediction['label']}")
+print(f"Model confidence score: {prediction['confidence']:.1%}")
 print(f"Correct label: {gold}")
-print(f"Match: {result['banking_intent'] == gold}")
+print(f"Match: {prediction['label'] == gold}")
 print(f"Load: {load_seconds:.2f}s; first prediction: {predict_seconds:.2f}s")

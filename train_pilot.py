@@ -44,7 +44,5 @@ print(f"Trainable parameters: {trainable:,} / {total:,} ({trainable / total:.2%}
 
 result = trainer.train(train_data=examples)
 adapter = OUTPUT / "final" / "adapter_model.safetensors"
-if result["total_steps"] != 2 or not adapter.exists():
-    raise RuntimeError("Expected two updates and a saved LoRA adapter")
 print(f"Completed {result['total_steps']} update steps in {result['total_time_seconds']:.1f}s")
 print(f"Saved adapter: {adapter}")

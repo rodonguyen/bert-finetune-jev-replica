@@ -31,7 +31,7 @@ python -m venv .venv
 .\.venv\Scripts\python predict_one.py
 ```
 
-`predict_one.py` takes the first **training** message and supplies all 77 possible labels to the model. It prints the model prediction, then reveals the correct label for inspection. The model does not receive the correct label. First use downloads the weights and includes warm-up time, so this single timing is not a benchmark.
+`predict_one.py` takes the first **training** message and supplies the first five labels in the manifest, as selected for this small demonstration. It prints the model prediction and confidence score, then reveals the correct label for inspection. The model does not receive the correct label. The score is not a calibrated probability of correctness, even when formatted as a percentage. The later `score_ten.py` and `compare_pilot.py` runs use all 77 labels. First use downloads the weights and includes warm-up time, so this single timing is not a benchmark.
 
 On the first local CPU walkthrough (2026-09-27), “I am still waiting on my card?” was predicted as `card_arrival`, matching the correct label. Loading took 47.78 s including the first download; the prediction took 1.23 s. One correct message does not estimate dataset accuracy.
 
@@ -73,4 +73,41 @@ This makes a seeded 90/10 split of the **official training** messages. It groups
 
 This samples eight development-training messages and runs **two** LoRA updates on the same GLiNER 2.5 base checkpoint. Batch size is one for the 4 GB GPU. It prints the fraction of trainable parameters and saves a small adapter under `runs/pilot_lora/final/`. The script verifies that two update steps completed and the adapter file exists. This is a training-path check, not a tuned classifier or a test-set result. LoRA is an explicit pilot choice for the local GPU; Josh's post did not specify his fine-tuning method. [GLiNER2 training guide](https://github.com/fastino-ai/GLiNER2/blob/main/tutorial/9-training.md)
 
-Josh Kuechly's screenshot does not identify his exact checkpoint or training settings. We chose the official English base checkpoint and will record that choice in any later comparison. Next we can write a fixed-test evaluator and then the fine-tuning step. BANKING77 classification is the rehearsal; the later 6190 task is memory-graph extraction from personal conversations and notes. No model training or test-set evaluation has been run yet.
+The 2026-09-27 pilot completed two optimizer steps in 2.0 s after setup. It trained 1,327,104 of 194,908,695 parameters (0.68%) and saved a 5.1 MB adapter. The two minibatch losses were 0.1300 and 0.1501; they came from different examples and do not show whether the model improved. Full validation and official test accuracy remain unmeasured.
+
+## Step 6: compare the saved adapter on validation data
+
+```powershell
+.\.venv\Scripts\python compare_pilot.py
+```
+
+This samples the same 20 held-out validation messages for both runs. It first predicts with the untouched checkpoint, then loads the saved LoRA adapter onto that checkpoint and predicts again with the same 77 labels. Paired outputs go to `runs/pilot_comparison.json`. This small check uses no official test examples and is not an accuracy benchmark.
+
+The 2026-09-27 check got **15/20** for both models, with **0 changed predictions**. Two optimizer updates on eight training messages made no visible difference on this sample. The adapter still needs a meaningful training run and broader validation before judging whether fine-tuning helps.
+
+Josh Kuechly's screenshot does not identify his exact checkpoint or training settings. We chose the official English base checkpoint and will record that choice in any later comparison. BANKING77 classification is the rehearsal; the later 6190 task is memory-graph extraction from personal conversations and notes. The official test set has not been evaluated.
+
+## Step 7: train on the development split, then score validation
+
+From this repository folder, run these commands in order:
+
+```powershell
+.\.venv\Scripts\python train_development.py
+.\.venv\Scripts\python score_validation.py
+```
+
+The first command trains a fresh LoRA adapter for **three epochs** on all **9,000 development-training messages**. A micro-batch holds one message on the 4 GB GPU; four micro-batches accumulate before each optimizer update, giving an effective batch of four and **6,750 updates** across three epochs. It checks validation loss after each epoch and saves the lowest-loss adapter under `runs/development_lora/best/`; it does not resume the two-step pilot. The second command scores the untouched checkpoint and that selected adapter on the same **1,003 validation messages**, using all 77 labels. It prints accuracy, macro-F1, and the accuracy difference in percentage points, then saves paired predictions to `runs/development_validation.json`.
+
+The development run uses LoRA rank 8, alpha 16, dropout 0.1, and targets the encoder plus the classification head. AdamW uses a peak LoRA learning rate of `5e-4`, weight decay `0.01`, gradient clipping at `1.0`, and a linear schedule with 10% warmup. FP16, a one-message evaluation batch, and the tested training micro-batch keep memory demand modest. These are starting settings, selected for this development run rather than claimed to match the X post.
+
+A local attempt with physical batch size 20 failed on the first six batches with CUDA out-of-memory errors and saved no adapter. Its diagnostics are preserved under `runs/development_lora_failed_b20_20260927/`. Gradient accumulation changes the optimizer's effective batch without holding 20 messages' activations in GPU memory at once.
+
+Training may take substantially longer than the two-step pilot. Keep the laptop powered and allow the Python process to finish before running the validation command. Both scripts require CUDA. The validation data selects the best epoch but supplies no gradient updates. The official test split is untouched; after inspecting validation results, we can retrain the selected setup on all 10,003 original training messages and evaluate on the official test set. Re-running training stops if `runs/development_lora/` already exists, protecting the first run from accidental overwrite.
+
+## Inspect the base checkpoint
+
+```powershell
+.\.venv\Scripts\python inspect_architecture.py
+```
+
+This prints the loaded encoder configuration, top-level parameter counts, and BANKING77 classification head. The base checkpoint has 193,581,591 parameters: 183,763,200 in the 12-layer DeBERTa encoder, 1,182,721 in the classifier, and the remainder in extraction, record, and relation heads. The classifier receives contextual label-marker states from the encoder and scores each supplied intent label. BANKING77 fine-tuning targets the encoder and classifier; the later memory-graph task will need the extraction and relation paths as well.
