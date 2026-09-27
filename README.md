@@ -2,18 +2,16 @@
 
 A local intent-classification experiment inspired by [Josh Kuechly's BANKING77 post](https://x.com/JoshKuechly/status/2100709039613100112). It compares the untouched [`fastino/gliner2.5-base-v1`](https://huggingface.co/fastino/gliner2.5-base-v1) checkpoint with a LoRA adapter trained on BANKING77. This is also a rehearsal for later work on extracting memory facts from personal conversations and notes; that extraction task is not implemented here.
 
-## Development results
+## Official test result
 
-Both models classified the same **1,003 held-out validation messages** among all 77 BANKING77 intents.
+Both models classified the same **3,080 official test messages** among all 77 BANKING77 intents. The adapted model was trained on 9,000 messages from the official training split; 1,003 training messages were reserved for development validation.
 
 | Model | Correct | Accuracy | Macro-F1 |
 | --- | ---: | ---: | ---: |
-| Untouched GLiNER 2.5 base | 657 / 1,003 | 65.50% | 0.650 |
-| Base + BANKING77 LoRA adapter | 900 / 1,003 | 89.73% | 0.899 |
+| Untouched GLiNER 2.5 base | 2,101 / 3,080 | 68.21% | 0.675 |
+| Base + BANKING77 LoRA adapter | 2,784 / 3,080 | 90.39% | 0.904 |
 
-The adapter gained **24.23 percentage points** of accuracy. It fixed 256 base-model errors and introduced 13 new ones. The selected adapter was trained for three epochs on the other **9,000 training messages**; training took 110.7 minutes on an RTX 3050 Ti laptop GPU with 4 GB VRAM. The best checkpoint was selected using validation loss.
-
-**These are development results, not an official test-set score.** The same validation split selected the checkpoint and supplied the reported accuracy. The 3,080-row official test split has not been evaluated. This project has not run Jev, and the post does not disclose enough settings for an exact reproduction of its numbers.
+The adapter gained **22.18 percentage points** of test accuracy.  Training ran for three epochs on an RTX 3050 Ti laptop GPU with 4 GB VRAM and took 110.7 minutes. The epoch-3 adapter was selected by development-validation loss before this test run.
 
 ## Try it without training
 
@@ -39,7 +37,7 @@ The command prints **two lines**, one label and confidence percentage per model.
 - **Development split:** `make_validation.py` divides the official training rows into 9,000 training and 1,003 validation examples with seed 42. Duplicate normalized messages stay in one subset, and every intent appears in both.
 - **Model:** `fastino/gliner2.5-base-v1` with `gliner2==2.0.0`. The untouched and adapted models receive the same text and all 77 candidate labels.
 - **Training:** LoRA on the encoder and classification head; rank 8, alpha 16, dropout 0.1; physical batch 1 with four gradient-accumulation steps (effective batch 4); three epochs; AdamW learning rate `5e-4`, 10% linear warmup, weight decay `0.01`, gradient clipping `1.0`, FP16. The lowest validation-loss checkpoint is used for scoring.
-- **Outputs:** Generated data, checkpoints, and paired predictions are written under `data/` and `runs/`, which are ignored by Git. The selected development adapter and its label manifest are bundled in `artifacts/banking77-lora/` for the quick example above. The development score file is `runs/development_validation.json` after running the scripts.
+- **Outputs:** Generated data, checkpoints, and paired predictions are written under `data/` and `runs/`, which are ignored by Git. The selected adapter and its label manifest are bundled in `artifacts/banking77-lora/` for the quick example above. Paired validation and test predictions are saved to `runs/development_validation.json` and `runs/development_test.json`.
 
 ## Reproduce the development run
 
@@ -52,19 +50,20 @@ On the Windows laptop used for the training result, PyTorch `2.6.0+cu124` was in
 .\.venv\Scripts\python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
 ```
 
-Choose the PyTorch build appropriate for your own GPU and driver. Prepare the pinned dataset, make the development split, train, and score:
+Choose the PyTorch build appropriate for your own GPU and driver. Prepare the pinned dataset, make the development split, train, and score both splits:
 
 ```powershell
 .\.venv\Scripts\python banking77.py prepare
 .\.venv\Scripts\python make_validation.py
 .\.venv\Scripts\python train_development.py
 .\.venv\Scripts\python score_validation.py
+.\.venv\Scripts\python score_test.py
 ```
 
-Training saves the adapter at `runs/development_lora/best/`. It refuses to overwrite an existing `runs/development_lora/` directory. Scoring prints accuracy and macro-F1 for both models and saves every paired prediction. The official `data/test.jsonl` is prepared but is not read by these training or scoring scripts.
+Training saves the adapter at `runs/development_lora/best/`. It refuses to overwrite an existing `runs/development_lora/` directory. Both scoring scripts print accuracy and macro-F1 and save every paired prediction. `score_test.py` refuses to overwrite an existing test result. Run it after fixing the model and settings using development validation.
 
 `predict_one.py`, `score_ten.py`, and `train_pilot.py` provide smaller walkthrough checks; `inspect_architecture.py` prints the base model's encoder and classifier layout.
 
-## Next step
+## Further work
 
-Fit the selected training setup on all 10,003 original training messages, then evaluate the untouched checkpoint and final adapter once on the 3,080-row official test split. Report test accuracy, macro-F1, paired errors, and inference timing. The later personal-memory task will need its own extraction schema and annotated evaluation data.
+Measure inference time with a controlled protocol and inspect test-set failure patterns. A later fit on all 10,003 original training messages would be a separate experiment with settings fixed in advance. The personal-memory task will need its own extraction schema and annotated evaluation data.
