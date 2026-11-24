@@ -1,0 +1,133 @@
+{
+  "split": "validation",
+  "sample_seed": 42,
+  "checkpoint": "fastino/gliner2.5-base-v1",
+  "adapter": "D:\\GitHub\\gliner25-banking77-memory-graph\\runs\\pilot_lora\\final",
+  "label_count": 77,
+  "sample_count": 20,
+  "base_correct": 15,
+  "pilot_correct": 15,
+  "changed_count": 0,
+  "predictions": [
+    {
+      "text": "Is there a way to view the history on where my funds came from?",
+      "gold": "verify_source_of_funds",
+      "base": "verify_source_of_funds",
+      "pilot": "verify_source_of_funds"
+    },
+    {
+      "text": "If I don't have much money in the account can I auto top-up?",
+      "gold": "automatic_top_up",
+      "base": "automatic_top_up",
+      "pilot": "automatic_top_up"
+    },
+    {
+      "text": "I thought I lost my card but I found it today, so I would like to reactivate it.",
+      "gold": "card_linking",
+      "base": "activate_my_card",
+      "pilot": "activate_my_card"
+    },
+    {
+      "text": "I am trying to transfer money and something is going wrong.",
+      "gold": "failed_transfer",
+      "base": "failed_transfer",
+      "pilot": "failed_transfer"
+    },
+    {
+      "text": "I haven't received money from a transfer?",
+      "gold": "transfer_not_received_by_recipient",
+      "base": "transfer_not_received_by_recipient",
+      "pilot": "transfer_not_received_by_recipient"
+    },
+    {
+      "text": "I am at the ATM and tried to withdraw 30 pounds and it only gave me 10 pounds, what do I do?",
+      "gold": "wrong_amount_of_cash_received",
+      "base": "atm_support",
+      "pilot": "atm_support"
+    },
+    {
+      "text": "Is there a limit for the amount I can top up?",
+      "gold": "top_up_limits",
+      "base": "top_up_limits",
+      "pilot": "top_up_limits"
+    },
+    {
+      "text": "Will this app allow me to exchange currencies?",
+      "gold": "exchange_via_app",
+      "base": "exchange_via_app",
+      "pilot": "exchange_via_app"
+    },
+    {
+      "text": "Why can't I make a transfer?",
+      "gold": "failed_transfer",
+      "base": "failed_transfer",
+      "pilot": "failed_transfer"
+    },
+    {
+      "text": "When can I expect my card?",
+      "gold": "card_delivery_estimate",
+      "base": "card_delivery_estimate",
+      "pilot": "card_delivery_estimate"
+    },
+    {
+      "text": "Can I change my PIN remotely?",
+      "gold": "change_pin",
+      "base": "change_pin",
+      "pilot": "change_pin"
+    },
+    {
+      "text": "A mortgage payment I'm making is giving me an error message.  This is the first time I'm making this payment and want to know what's wrong.",
+      "gold": "failed_transfer",
+      "base": "failed_transfer",
+      "pilot": "failed_transfer"
+    },
+    {
+      "text": "Will I be charged for topping up?",
+      "gold": "top_up_by_card_charge",
+      "base": "top_up_by_card_charge",
+      "pilot": "top_up_by_card_charge"
+    },
+    {
+      "text": "I tried to buy something over the Internet yesterday and got a declined error. I tried again today and got the same message. What is the issue?",
+      "gold": "declined_transfer",
+      "base": "declined_card_payment",
+      "pilot": "declined_card_payment"
+    },
+    {
+      "text": "Am I allowed to hold money in multiple currencies?",
+      "gold": "fiat_currency_support",
+      "base": "fiat_currency_support",
+      "pilot": "fiat_currency_support"
+    },
+    {
+      "text": "My money transfer has not yet occurred",
+      "gold": "pending_transfer",
+      "base": "transfer_not_received_by_recipient",
+      "pilot": "transfer_not_received_by_recipient"
+    },
+    {
+      "text": "Transferring money using credit card",
+      "gold": "topping_up_by_card",
+      "base": "visa_or_mastercard",
+      "pilot": "visa_or_mastercard"
+    },
+    {
+      "text": "How will I know what the exchange rate is?",
+      "gold": "exchange_rate",
+      "base": "exchange_rate",
+      "pilot": "exchange_rate"
+    },
+    {
+      "text": "Please explain your exchange rate policy.",
+      "gold": "exchange_rate",
+      "base": "exchange_rate",
+      "pilot": "exchange_rate"
+    },
+    {
+      "text": "I'm interested in holding and exchange for flat currencies, what do you support?",
+      "gold": "fiat_currency_support",
+      "base": "fiat_currency_support",
+      "pilot": "fiat_currency_support"
+    }
+  ]
+}

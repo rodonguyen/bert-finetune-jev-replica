@@ -1,0 +1,39 @@
+{
+  "checkpoint": "fastino/gliner2.5-base-v1",
+  "split_seed": 42,
+  "training_examples": 9000,
+  "epochs": 3,
+  "batch_size": 1,
+  "gradient_accumulation_steps": 4,
+  "effective_batch_size": 4,
+  "optimizer_steps": 6750,
+  "training_seconds": 6642.284094572067,
+  "best_validation_loss": 0.007753115720896308,
+  "validation_history": [
+    {
+      "eval_loss": 0.014349417633672501,
+      "eval_classification_loss": 0.014349417633672501,
+      "eval_structure_loss": 0.0,
+      "eval_count_loss": 0.0,
+      "step": 2250,
+      "epoch": 0
+    },
+    {
+      "eval_loss": 0.00947750074929711,
+      "eval_classification_loss": 0.00947750074929711,
+      "eval_structure_loss": 0.0,
+      "eval_count_loss": 0.0,
+      "step": 4500,
+      "epoch": 1
+    },
+    {
+      "eval_loss": 0.007753115720896308,
+      "eval_classification_loss": 0.007753115720896308,
+      "eval_structure_loss": 0.0,
+      "eval_count_loss": 0.0,
+      "step": 6750,
+      "epoch": 2
+    }
+  ],
+  "adapter": "D:\\GitHub\\gliner25-banking77-memory-graph\\runs\\development_lora\\best\\adapter_model.safetensors"
+}
